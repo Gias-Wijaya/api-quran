@@ -85,6 +85,7 @@
     });
 
 
+        // Handle Surah Detail
     $(document).on('click', '.btn-detail', function() {
       const surahId = $(this).data('id');
       
@@ -93,8 +94,18 @@
         success: (res) => {
           const surah = res.data;
           let ayatHtml = '';
-          
 
+          // Bagian Deskripsi Surah
+          const deskripsiHtml = `
+            <div class="bg-light p-4 rounded-3 mb-4">
+              <h5 class="mb-3">Deskripsi Surah</h5>
+              <div class="text-muted lh-base">
+                ${surah.deskripsi}
+              </div>
+            </div>
+          `;
+
+          // Tampilkan semua ayat
           surah.ayat.forEach(ayat => {
             ayatHtml += `
               <div class="ayat-item mb-4 border-bottom pb-3">
@@ -114,7 +125,7 @@
             `;
           });
           
-
+          // Update Modal Content
           $('#surahModalLabel').html(`
             ${surah.namaLatin} (${surah.arti})
           `);
@@ -124,6 +135,7 @@
               <h4 class="arabic-text">${surah.nama}</h4>
               <p class="text-muted">${surah.tempatTurun} • ${surah.jumlahAyat} ayat</p>
             </div>
+            ${deskripsiHtml}
             ${ayatHtml}
           `);
           
