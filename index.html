@@ -3,37 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daftar Surah Al-Quran</title>
-  <!-- Bootstrap CSS -->
+  <title>Al-Quran Digital</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .arabic-text {
+      font-size: 1.5rem;
+      text-align: right;
+      direction: rtl;
+    }
+    .scrollable-modal {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1 class="text-center mb-4">Daftar Surah Al-Quran</h1>
-    <div id="surah-list" class="row">
-      <!-- Daftar surah akan dimuat di sini -->
+  <div class="container py-5">
+    <h1 class="text-center mb-4">Al-Quran Digital</h1>
+    <div id="loading" class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
+    <div id="surah-list" class="row g-4"></div>
   </div>
 
-  <!-- Modal untuk Detail Surah -->
-  <div class="modal fade" id="surahDetailModal" tabindex="-1" aria-labelledby="surahDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+
+  <div class="modal fade" id="surahModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="surahDetailModalLabel">Detail Surah</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="modal-title" id="surahModalLabel"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body" id="surah-detail">
-          <!-- Detail surah akan dimuat di sini -->
+        <div class="modal-body scrollable-modal">
+          <div id="surah-detail"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- jQuery dan Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Custom JS -->
-  <script src="script.js"></script>
+  <script>
+  $(document).ready(function() {
+    
+    $.ajax({
+      url: "https://equran.id/api/v2/surat",
+      success: (res) => {
+        $('#loading').hide();
+        const surahs = res.data;
+        let html = '';
+        
+        surahs.forEach(surah => {
+          html += `
+            <div class="col-md-6 col-lg-4">
+              <div class="card h-100 shadow">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <h5 class="card-title">${surah.namaLatin}</h5>
+                    <span class="badge bg-primary">${surah.nomor}</span>
+                  </div>
+                  <p class="card-subtitle mb-2 text-muted">${surah.arti}</p>
+                  <p class="card-text small">
+                    ${surah.tempatTurun} • ${surah.jumlahAyat} ayat
+                  </p>
+                  <button 
+                    class="btn btn-outline-primary btn-sm btn-detail" 
+                    data-id="${surah.nomor}"
+                  >
+                    Baca Surah
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        $('#surah-list').html(html);
+      }
+    });
+
+
+    $(document).on('click', '.btn-detail', function() {
+      const surahId = $(this).data('id');
+      
+      $.ajax({
+        url: `https://equran.id/api/v2/surat/${surahId}`,
+        success: (res) => {
+          const surah = res.data;
+          let ayatHtml = '';
+          
+
+          surah.ayat.forEach(ayat => {
+            ayatHtml += `
+              <div class="ayat-item mb-4 border-bottom pb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-success">Ayat ${ayat.nomorAyat}</span>
+                  <button 
+                    class="btn btn-link text-decoration-none"
+                    onclick="navigator.clipboard.writeText('${ayat.teksArab}')"
+                  >
+                    Salin
+                  </button>
+                </div>
+                <div class="arabic-text mb-2">${ayat.teksArab}</div>
+                <div class="text-muted mb-2">${ayat.teksLatin}</div>
+                <div class="fst-italic">"${ayat.teksIndonesia}"</div>
+              </div>
+            `;
+          });
+          
+
+          $('#surahModalLabel').html(`
+            ${surah.namaLatin} (${surah.arti})
+          `);
+          
+          $('#surah-detail').html(`
+            <div class="text-center mb-4">
+              <h4 class="arabic-text">${surah.nama}</h4>
+              <p class="text-muted">${surah.tempatTurun} • ${surah.jumlahAyat} ayat</p>
+            </div>
+            ${ayatHtml}
+          `);
+          
+          new bootstrap.Modal('#surahModal').show();
+        }
+      });
+    });
+  });
+  </script>
 </body>
 </html>
